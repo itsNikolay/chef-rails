@@ -1,0 +1,31 @@
+set :stage, :<%= node.app.app_stage %>
+set :application, "<%= node.app.app_name %>"
+set :rails_env, :<%= node.app.app_stage %>
+
+set :repo_url, '<%= node.app.repo_url %>'
+set :deploy_to, "<%= node.app.app_path %>"
+set :branch, "master"
+
+role :app, %w{<%= node.app.user + "@" + node.app.server %>}
+role :web, %w{<%= node.app.user + "@" + node.app.server %>}
+role :db,  %w{<%= node.app.user + "@" + node.app.server %>}
+server '<%= node.app.server %>', user: '<%= node.app.user %>'
+
+set :default_env, { path: "#{fetch(:rbenv_path)}/shims:#{fetch(:rbenv_path)}/bin:$PATH" }
+set :bundle_flags, "--deployment --quiet --binstubs"
+
+set :rbenv_type, :user
+set :rbenv_ruby, '2.0.0-p247'
+set :rbenv_path, '/opt/rbenv'
+set :rbenv_prefix, "RBENV_ROOT=#{fetch(:rbenv_path)} RBENV_VERSION=#{fetch(:rbenv_ruby)} #{fetch(:rbenv_path)}/bin/rbenv exec"
+set :rbenv_map_bins, %w{rake gem bundle ruby rails}
+set :rbenv_roles, :all # default value
+
+namespace :deploy do
+  desc 'Restart application'
+  task :restart do
+    on roles :app do
+      execute :sv, 'restart', '<%= node.app.app_name %>'
+    end
+  end
+end

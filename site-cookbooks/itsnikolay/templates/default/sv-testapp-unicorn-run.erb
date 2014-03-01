@@ -1,0 +1,73 @@
+#!/bin/bash
+exec 2>&1
+
+#
+# Since unicorn creates a new pid on restart/reload, it needs a little extra love to
+# manage with runit. Instead of managing unicorn directly, we simply trap signal calls
+# to the service and redirect them to unicorn directly.
+
+function is_unicorn_alive {
+    set +e
+    if [ -n $1 ] && kill -0 $1 >/dev/null 2>&1; then
+        echo "yes"
+    fi
+    set -e
+}
+
+echo "Service PID: $$"
+
+if [ -e <%= node['itsnikolay']['app_shared'] %>/pids/unicorn.pid.oldbin ]; then
+    OLD_PID=$(cat <%= node['itsnikolay']['app_shared'] %>/pids/unicorn.pid.oldbin)
+    echo "Waiting for existing master ($OLD_PID) to exit"
+    while [ -n "$(is_unicorn_alive $OLD_PID)" ]; do
+        /bin/echo -n '.'
+        sleep 2
+    done
+fi
+
+if [ -e <%= node['itsnikolay']['app_shared'] %>/pids/unicorn.pid ]; then
+    CUR_PID=$(cat <%= node['itsnikolay']['app_shared'] %>/pids/unicorn.pid)
+    if [ -n "$(is_unicorn_alive $CUR_PID)" ]; then
+        echo "Unicorn master already running. PID: $CUR_PID"
+        RUNNING=true
+    fi
+fi
+
+if [ ! $RUNNING ]; then
+    echo "Starting unicorn"
+    cd <%= node['itsnikolay']['app_current'] %>
+    export PATH="/opt/rbenv/shims:/opt/rbenv/bin:$PATH"
+    # You need to daemonize the unicorn process, http://unicorn.bogomips.org/unicorn_rails_1.html
+    bundle exec unicorn -c config/unicorn.rb -E production -D
+    sleep 3
+    CUR_PID=$(cat <%= node['itsnikolay']['app_shared'] %>/pids/unicorn.pid)
+fi
+
+function restart {
+    echo "Initialize new master with USR2"
+    kill -USR2 $CUR_PID
+    # Make runit restart to pick up new unicorn pid
+    sleep 2
+    echo "Restarting service to capture new pid"
+    exit
+}
+
+function graceful_shutdown {
+    echo "Initializing graceful shutdown"
+    kill -QUIT $CUR_PID
+}
+
+function unicorn_interrupted {
+    echo "Unicorn process interrupted. Possibly a runit thing?"
+}
+
+trap restart HUP QUIT USR2 INT
+trap graceful_shutdown TERM KILL
+trap unicorn_interrupted ALRM
+
+echo "Waiting for current master to die. PID: ($CUR_PID)"
+while [ -n "$(is_unicorn_alive $CUR_PID)" ]; do
+    /bin/echo -n '.'
+    sleep 2
+done
+echo "You've killed a unicorn!"

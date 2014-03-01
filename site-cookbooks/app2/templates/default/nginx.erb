@@ -1,0 +1,26 @@
+upstream <%= node.app.app_name %>_server {
+  server unix:<%= node.app.app_unicorn_sock %>;
+}
+
+server {
+  listen 80;
+  root <%= node.app.app_public %>;
+
+  access_log /var/log/nginx/<%= node.app.app_name %>.access.log;
+  error_log /var/log/nginx/<%= node.app.app_name %>.error.log;
+
+  try_files $uri/index.html $uri.html $uri @<%= node.app.app_name %>;
+
+  location @<%= node.app.app_name %> {
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_pass http://<%= node.app.app_name %>_server;
+  }
+
+  location ~ ^/(assets|images|javascripts|stylesheets|system|uploads)/ {
+    gzip_static on;
+    expires     max;
+    add_header  Cache-Control public;
+  }
+}

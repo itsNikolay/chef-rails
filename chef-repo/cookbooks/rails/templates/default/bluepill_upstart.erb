@@ -1,0 +1,9 @@
+description "bluepill for <%= @name %>"
+
+start on (started ssh)
+expect daemon
+respawn
+
+script
+  <%= node["bluepill"]["bin"] %> load /etc/bluepill/<%= @name %>.pill
+end script

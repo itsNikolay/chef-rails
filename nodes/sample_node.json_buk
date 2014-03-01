@@ -1,0 +1,83 @@
+{
+  "git": {
+    "version": "1.8.5.2"
+  },
+  "openssh": {
+    "server": {
+      "password_authentication": "no"
+    }
+  },
+  "rbenv": {
+    "user_installs": [
+      {
+      "user": "vagrant",
+      "rubies": [
+        "2.0.0-p353"
+      ],
+      "global": "2.0.0-p353",
+      "gems": {
+        "2.0.0-p247": [
+          { "name": "bundler" },
+          { "name": "rake" }
+        ]
+      }
+    }
+    ]
+  },
+  "postgresql": {
+    "config": {
+      "listen_addresses": "*",
+      "port": "5432"
+    },
+    "pg_hba": [
+      {
+      "type": "local",
+      "db": "postgres",
+      "user": "postgres",
+      "addr": null,
+      "method": "md5"
+    },
+    {
+      "type": "host",
+      "db": "all",
+      "user": "all",
+      "addr": "0.0.0.0/0",
+      "method": "md5"
+    },
+    {
+      "type": "host",
+      "db": "all",
+      "user": "all",
+      "addr": "::1/0",
+      "method": "md5"
+    }
+    ],
+    "password": {
+      "postgres": "secret"
+    }
+  },
+  "nginx": {
+    "dir": "/etc/nginx",
+    "log_dir": "/var/log/nginx",
+    "binary": "/usr/sbin/nginx",
+    "user": "www-data",
+    "init_style": "runit",
+    "pid": "/var/run/nginx.pid",
+    "worker_connections": "1024",
+    "server_tokens": "off",
+    "worker_processes": "1",
+    "version": "1.4.4"
+  },
+  "run_list":[
+    "recipe[apt]",
+    "recipe[git]",
+    "recipe[openssh]",
+    "recipe[postgresql::server]",
+    "recipe[postgresql::client]",
+    "recipe[ruby_build]",
+    "recipe[rbenv::default]",
+    "recipe[rbenv::ruby_build]",
+    "recipe[rbenv::ruby_install]",
+    "recipe[nginx::source]"
+  ]
+}

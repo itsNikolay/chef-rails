@@ -1,0 +1,49 @@
+{
+  "run_list":["role[mysql]","role[rails]"],
+  "mysql": {
+    "server_debian_password": "<enter a random password>",
+    "server_root_password": "<enter a random password>",
+    "server_repl_password": "<enter a random password>",
+    "bind_address": "127.0.0.1" // Only make MySQL available to localhost
+  },
+  "authorization": {
+    "sudo": {
+      "include_sudoers_d": true,
+      "users": ["<your sudo user>"],
+      "passwordless": true,
+      "sudoers_defaults": [
+        "env_reset",
+        "secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\""
+      ]
+    }
+  },
+  "ssh_deploy_keys": [
+    "<enter the contents of an id_rsa.pub here>"
+  ],
+  "nginx": {
+    "server_tokens": "off" // This ensures that nginx doesn't pass on version information to attackers.
+  },
+  "active_applications": {
+    "<appname>_<stage>": {
+      "rails_env": "<stage, eg: production>",
+      "packages": ["nodejs"],
+      "domain_names": ["<domain name>", "<domain name>", "<...>"],
+      "ruby_version": "2.0.0-p247",
+      "ssl_info": {
+        "key": "<ssl key>",
+        "crt": "<ssl crt>"
+        },
+      "database_info": {
+        "adapter": "mysql2",
+        "host": "localhost",
+        "username": "<db username, max 10 characters>",
+        "password": "<enter a random password>",
+        "database": "<appname>_<stage>"
+      }
+    }
+  },
+  "deploy_users": ["deploy"],
+  "rbenv": {
+    "group_users": ["deploy"]
+  }
+}

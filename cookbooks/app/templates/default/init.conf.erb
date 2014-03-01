@@ -1,0 +1,3 @@
+check process <%= node.app.app_name %> with pidfile <%= node.app.app_unicorn_pid %>
+  start program = "/bin/su - <%= node.user %> /etc/init.d/<%= node.app.app_name %> start"
+  stop program  = "/bin/su - <%= node.user %> /etc/init.d/<%= node.app.app_name %> stop"

@@ -1,0 +1,116 @@
+{
+  "authorization": {
+    "sudo": {
+      "include_sudoers_d": true,
+      "groups": ["deployers"],
+      "users": ["app", "vagrant"],
+      "passwordless": true,
+      "sudoers_defaults": [
+        "env_reset",
+        "secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\""
+      ]
+    }
+  },
+  "openssh": {
+    "server": {
+      "password_authentication": "yes"
+    }
+  },
+  "rbenv": {
+    "user_installs": [
+      {
+      "user": "app",
+      "rubies": [
+        "2.1.0"
+      ],
+      "global": "2.1.0",
+      "gems": {
+        "2.1.0": [
+          { "name": "bundler" }
+        ]
+      }
+    }
+    ]
+  },
+  "postgresql": {
+    "config": {
+      "listen_addresses": "*",
+      "port": "5432"
+    },
+    "pg_hba": [
+      {
+      "type": "local",
+      "db": "postgres",
+      "user": "postgres",
+      "addr": null,
+      "method": "md5"
+    },
+    {
+      "type": "host",
+      "db": "all",
+      "user": "all",
+      "addr": "0.0.0.0/0",
+      "method": "md5"
+    },
+    {
+      "type": "host",
+      "db": "all",
+      "user": "all",
+      "addr": "127.0.0.1/32",
+      "method": "md5"
+    },
+    {
+      "type": "host",
+      "db": "all",
+      "user": "all",
+      "addr": "::1/0",
+      "method": "md5"
+    }
+    ],
+    "password": {
+      "postgres": "secret"
+    }
+  },
+  "nginx": {
+    "dir": "/etc/nginx",
+    "log_dir": "/var/log/nginx",
+    "binary": "/usr/sbin/nginx",
+    "user": "www-data",
+    "pid": "/var/run/nginx.pid",
+    "init_style": "init.d",
+    "worker_connections": "1024",
+    "server_tokens": "off",
+    "worker_processes": "1",
+    "version": "1.4.4",
+    "gzip_vary": "on"
+  },
+  "redisio": {
+    "version": "2.8.3",
+    "mirror": "http://download.redis.io/releases/",
+    "base_piddir": "/etc/redis",
+    "default_settings": {
+      "logfile": "/var/log/redis.log",
+      "homedir": "/etc/redis"
+    }
+  },
+  "monit": {
+    "allow": ["0.0.0.0"],
+    "address": "0.0.0.0",
+    "username": "admin",
+    "password": "monit"
+  },
+  "run_list":[
+    "recipe[deployers]",
+    "recipe[apt]",
+    "recipe[postgresql::server]",
+    "recipe[postgresql::client]",
+    "recipe[ruby_build]",
+    "recipe[rbenv::user]",
+    "recipe[nginx::source]",
+    "recipe[redisio::install]",
+    "recipe[redisio::enable]",
+    "recipe[monit]",
+    "recipe[custom]",
+    "recipe[app]"
+  ]
+}
